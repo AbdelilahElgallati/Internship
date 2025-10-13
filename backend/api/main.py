@@ -64,7 +64,7 @@ async def root():
 
 @app.get("/internships")
 async def get_internships(
-    limit: int = Query(100, ge=1, le=500, description="Number of results to return"),
+    limit: Optional[int] = Query(None, ge=1, description="Number of results to return (optional, default=None for all results)"),
     offset: int = Query(0, ge=0, description="Number of results to skip")
 ):
     """
@@ -83,7 +83,7 @@ async def search_internships(
     keyword: Optional[str] = Query(None, description="Search in title and description"),
     location: Optional[str] = Query(None, description="Filter by location"),
     source_site: Optional[str] = Query(None, description="Filter by source (LinkedIn, Indeed, etc.)"),
-    limit: int = Query(100, ge=1, le=500, description="Maximum number of results")
+    limit: Optional[int] = Query(None, ge=1, description="Maximum number of results (optional, default=None for all results)")
 ):
     """
     Recherche des offres de stage avec filtres
@@ -110,7 +110,8 @@ async def get_internship_stats():
     Obtenir des statistiques sur les offres de stage
     """
     try:
-        all_internships = db_client.get_all_internships(limit=10000)
+        # Remove the hardcoded limit of 10000
+        all_internships = db_client.get_all_internships(limit=None)
         
         if not all_internships:
             return {

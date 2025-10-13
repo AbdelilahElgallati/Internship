@@ -12,7 +12,7 @@ class ScraperScheduler:
     def __init__(self):
         self.scheduler = BackgroundScheduler()
         self.scrapers = [
-            # IndeedScraper(),
+            IndeedScraper(),
             LinkedInScraper(),
             WelcomeToTheJungleScraper(),
             StagiairesMaScraper(), 

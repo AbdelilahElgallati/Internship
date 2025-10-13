@@ -32,10 +32,13 @@ class StagiairesMaScraper(BaseScraper):
     def scrape(self, keywords: List[str], locations: List[str]) -> List[Dict]:
         all_results = []
 
-        # Filter to target only Moroccan locations for this specialized site
-        moroccan_locations = [loc for loc in locations if 'Morocco' in loc or loc in ['Casablanca', 'Rabat', 'Tanger', 'Fes', 'Marrakech', 'Agadir']]
+        # FIX: Filter to target only Moroccan *cities* as the site's 'ville' parameter 
+        # causes a 404 for the general 'Morocco' location.
+        valid_cities = ['Casablanca', 'Rabat', 'Tanger', 'Fes', 'Marrakech', 'Agadir']
+        moroccan_locations = [loc for loc in locations if loc in valid_cities]
+        
         if not moroccan_locations:
-             print("Skipping Stagiaires.ma: No Moroccan locations defined.")
+             print("Skipping Stagiaires.ma: No valid Moroccan city locations defined.")
              return []
 
         for keyword in keywords:

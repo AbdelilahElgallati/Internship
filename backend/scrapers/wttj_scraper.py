@@ -44,8 +44,9 @@ class WelcomeToTheJungleScraper(BaseScraper):
 
     def _scrape_keyword(self, keyword: str, location: str) -> List[Dict]:
         results = []
-        parsed_count = 0
+        # parsed_count variable removed, replaced by direct use of len(results)
         current_page = 1
+        page_parsed_count = 0 # FIX 1: Initialize here to prevent NameError if request fails early
         
         # WTTJ is highly dynamic; filtering is best done through URL parameters
         # However, building a URL that accepts all your complex keywords is hard.
@@ -61,7 +62,7 @@ class WelcomeToTheJungleScraper(BaseScraper):
                 'sortBy': 'published_at_desc', # Sort by date
                 # Location filter is applied in the URL path for better results on WTTJ
                 # But for simplicity, we use the query parameter and hope the search engine handles it
-                'aroundQuery': location if location not in ['Remote', 'Africa', 'Europe'] else None
+                'aroundQuery': location 
             }
             
             # Remove None values
@@ -148,5 +149,6 @@ class WelcomeToTheJungleScraper(BaseScraper):
                 print(f"Error fetching WTTJ results for '{keyword}' in '{location}' (page {current_page}): {str(e)}")
                 break
 
-        print(f"Finished scraping '{keyword}' in '{location}'. Total jobs parsed: {len(results) - parsed_count + page_parsed_count}")
+        # FIX 2: Use len(results) for the correct total
+        print(f"Finished scraping '{keyword}' in '{location}'. Total jobs parsed: {len(results)}")
         return results

@@ -238,8 +238,8 @@ class LinkedInScraper(BaseScraper):
             params = {
                 'keywords': keyword,
                 'location': location,
-                'f_TPR': 'r86400',  # Dernières 24h
-                'f_JT': 'I',  # Internship
+                # 'f_TPR': 'r604800',  # Dernière semaine
+                # 'f_JT': 'I',  # Internship
                 'start': start_offset,
                 'sortBy': 'DD'  # Date descending
             }
