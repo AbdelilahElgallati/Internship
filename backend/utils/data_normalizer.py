@@ -1,72 +1,63 @@
-from datetime import datetime, timedelta
-import re
-from typing import Optional
+import hashlib
+from datetime import datetime
+from typing import Dict, Any
 
 class DataNormalizer:
+    """Normalise les données de scraping pour l'insertion en base de données"""
+    
     @staticmethod
-    def normalize_date(date_str: str) -> Optional[str]:
-        if not date_str:
-            return None
-
-        date_str = date_str.lower().strip()
-        now = datetime.utcnow()
-
-        if 'just now' in date_str or 'today' in date_str:
-            return now.isoformat()
-        elif 'yesterday' in date_str:
-            return (now - timedelta(days=1)).isoformat()
-        elif 'hour' in date_str:
-            hours = re.search(r'(\d+)', date_str)
-            if hours:
-                return (now - timedelta(hours=int(hours.group(1)))).isoformat()
-        elif 'day' in date_str:
-            days = re.search(r'(\d+)', date_str)
-            if days:
-                return (now - timedelta(days=int(days.group(1)))).isoformat()
-        elif 'week' in date_str:
-            weeks = re.search(r'(\d+)', date_str)
-            if weeks:
-                return (now - timedelta(weeks=int(weeks.group(1)))).isoformat()
-        elif 'month' in date_str:
-            months = re.search(r'(\d+)', date_str)
-            if months:
-                return (now - timedelta(days=int(months.group(1)) * 30)).isoformat()
-
-        return now.isoformat()
-
+    def _generate_content_hash(job_data: Dict[str, Any]) -> str:
+        """
+        Génère un hash unique basé sur le contenu du job
+        Utilisé pour détecter les doublons
+        """
+        # Créer une chaîne unique à partir des données importantes
+        unique_string = f"{job_data.get('job_title', '')}|" \
+                       f"{job_data.get('company_name', '')}|" \
+                       f"{job_data.get('location', '')}|" \
+                       f"{job_data.get('apply_link', '')}"
+        
+        # Générer un hash MD5
+        return hashlib.md5(unique_string.encode('utf-8')).hexdigest()
+    
     @staticmethod
-    def clean_text(text: str) -> str:
-        if not text:
-            return ""
-        text = re.sub(r'\s+', ' ', text)
-        text = text.strip()
-        return text
-
-    @staticmethod
-    def normalize_location(location: str) -> str:
-        if not location:
-            return "Remote"
-        location = DataNormalizer.clean_text(location)
-        return location
-
-    @staticmethod
-    def truncate_description(description: str, max_length: int = 500) -> str:
-        if not description:
-            return ""
-        description = DataNormalizer.clean_text(description)
-        if len(description) > max_length:
-            return description[:max_length] + "..."
-        return description
-
-    @staticmethod
-    def normalize_internship(raw_data: dict) -> dict:
-        return {
-            'job_title': DataNormalizer.clean_text(raw_data.get('job_title', '')),
-            'company_name': DataNormalizer.clean_text(raw_data.get('company_name', '')),
-            'location': DataNormalizer.normalize_location(raw_data.get('location', '')),
-            'date_posted': DataNormalizer.normalize_date(raw_data.get('date_posted', '')),
-            'employment_type': raw_data.get('employment_type', 'Internship'),
-            'job_description': DataNormalizer.truncate_description(raw_data.get('job_description', '')),
-            'apply_link': raw_data.get('apply_link', ''),
-            'source_site': raw_data.get('source_site', '')
+    def _normalize_date(date_str: str) -> str:
+        """
+        Normalise les différents formats de date en ISO format
+        """
+        if not date_str or date_str == 'Recently':
+            return datetime.utcnow().isoformat()
+        
+        # Si c'est déjà au format ISO, retourner tel quel
+        if 'T' in date_str or len(date_str) > 15:
+            return date_str
+        
+        # Sinon, utiliser la date actuelle
+        return datetime.utcnow().isoformat()
+    
+    def normalize_internship(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Normalise les données d'un stage pour correspondre au schéma de la base de données
+        """
+        normalized = {
+            'job_title': raw_data.get('job_title', 'Untitled Position').strip(),
+            'company_name': raw_data.get('company_name', 'Unknown Company').strip(),
+            'location': raw_data.get('location', 'Remote').strip(),
+            'employment_type': raw_data.get('employment_type', 'Internship').strip(),
+            'job_description': raw_data.get('job_description', '').strip(),
+            'apply_link': raw_data.get('apply_link', '').strip(),
+            'source_site': raw_data.get('source_site', 'Unknown').strip(),
+            'date_posted': self._normalize_date(raw_data.get('date_posted', '')),
+            'scraped_at': datetime.utcnow().isoformat()
         }
+        
+        # Générer le content_hash
+        normalized['content_hash'] = self._generate_content_hash(normalized)
+        
+        return normalized
+    
+    def normalize_internship_batch(self, raw_data_list: list[Dict[str, Any]]) -> list[Dict[str, Any]]:
+        """
+        Normalise un lot de stages
+        """
+        return [self.normalize_internship(data) for data in raw_data_list]

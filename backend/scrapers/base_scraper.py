@@ -9,8 +9,9 @@ class BaseScraper(ABC):
         self.db_client = DatabaseClient()
         self.normalizer = DataNormalizer()
 
+    # Updated abstract method signature
     @abstractmethod
-    def scrape(self, keywords: List[str]) -> List[Dict]:
+    def scrape(self, keywords: List[str], locations: List[str]) -> List[Dict]:
         pass
 
     def save_results(self, raw_results: List[Dict]) -> int:
@@ -31,9 +32,10 @@ class BaseScraper(ABC):
             self.db_client.log_scrape_end(log_id, 0, 'failed', str(e))
             raise e
 
-    def run(self, keywords: List[str]) -> int:
+    # Updated run method signature and call to self.scrape
+    def run(self, keywords: List[str], locations: List[str]) -> int:
         print(f"Starting scrape for {self.source_site}...")
-        raw_results = self.scrape(keywords)
+        raw_results = self.scrape(keywords, locations)
         print(f"Found {len(raw_results)} results from {self.source_site}")
 
         inserted_count = self.save_results(raw_results)

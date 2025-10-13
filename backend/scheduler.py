@@ -3,7 +3,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime
 from scrapers.indeed_scraper import IndeedScraper
 from scrapers.linkedin_scraper import LinkedInScraper
-from config import SCRAPE_KEYWORDS, SCRAPE_INTERVAL_HOURS
+from config import SCRAPE_KEYWORDS, SCRAPE_INTERVAL_HOURS, SCRAPE_LOCATIONS # Updated import
 
 class ScraperScheduler:
     def __init__(self):
@@ -16,13 +16,16 @@ class ScraperScheduler:
     def scrape_all_sites(self):
         print(f"\n{'='*50}")
         print(f"Starting scheduled scrape at {datetime.utcnow()}")
+        print(f"Scraping keywords: {len(SCRAPE_KEYWORDS)}") # Added logging
+        print(f"Scraping locations: {', '.join(SCRAPE_LOCATIONS)}") # Added logging
         print(f"{'='*50}\n")
 
         total_inserted = 0
 
         for scraper in self.scrapers:
             try:
-                inserted_count = scraper.run(SCRAPE_KEYWORDS)
+                # Pass both keywords and locations to run
+                inserted_count = scraper.run(SCRAPE_KEYWORDS, SCRAPE_LOCATIONS) 
                 total_inserted += inserted_count
             except Exception as e:
                 print(f"Error running {scraper.source_site} scraper: {str(e)}")
