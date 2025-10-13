@@ -3,21 +3,26 @@ from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime
 from scrapers.indeed_scraper import IndeedScraper
 from scrapers.linkedin_scraper import LinkedInScraper
-from config import SCRAPE_KEYWORDS, SCRAPE_INTERVAL_HOURS, SCRAPE_LOCATIONS # Updated import
+from scrapers.wttj_scraper import WelcomeToTheJungleScraper
+from scrapers.stagiaires_ma_scraper import StagiairesMaScraper 
+from config import SCRAPE_KEYWORDS, SCRAPE_INTERVAL_HOURS, SCRAPE_LOCATIONS
+import threading 
 
 class ScraperScheduler:
     def __init__(self):
         self.scheduler = BackgroundScheduler()
         self.scrapers = [
-            IndeedScraper(),
-            LinkedInScraper()
+            # IndeedScraper(),
+            LinkedInScraper(),
+            WelcomeToTheJungleScraper(),
+            StagiairesMaScraper(), 
         ]
 
     def scrape_all_sites(self):
         print(f"\n{'='*50}")
         print(f"Starting scheduled scrape at {datetime.utcnow()}")
-        print(f"Scraping keywords: {len(SCRAPE_KEYWORDS)}") # Added logging
-        print(f"Scraping locations: {', '.join(SCRAPE_LOCATIONS)}") # Added logging
+        print(f"Scraping keywords: {len(SCRAPE_KEYWORDS)}")
+        print(f"Scraping locations: {', '.join(SCRAPE_LOCATIONS)}")
         print(f"{'='*50}\n")
 
         total_inserted = 0
@@ -46,7 +51,11 @@ class ScraperScheduler:
             replace_existing=True
         )
 
-        self.scrape_all_sites()
+        # FIX: The initial synchronous call must be run in a separate thread 
+        # to prevent blocking the main FastAPI asyncio loop.
+        print("📡 Starting initial scrape in a dedicated thread...")
+        initial_scrape_thread = threading.Thread(target=self.scrape_all_sites)
+        initial_scrape_thread.start()
 
         self.scheduler.start()
         print(f"Scheduler started. Will scrape every {SCRAPE_INTERVAL_HOURS} hours.")
