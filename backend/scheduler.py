@@ -3,8 +3,10 @@ from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime
 from scrapers.indeed_scraper import IndeedScraper
 from scrapers.linkedin_scraper import LinkedInScraper
-from scrapers.wttj_scraper import WelcomeToTheJungleScraper
-from scrapers.stagiaires_ma_scraper import StagiairesMaScraper 
+
+from scrapers.remote_ok_scraper import RemoteOKScraper
+
+
 from config import SCRAPE_KEYWORDS, SCRAPE_INTERVAL_HOURS, SCRAPE_LOCATIONS
 import threading 
 
@@ -12,10 +14,9 @@ class ScraperScheduler:
     def __init__(self):
         self.scheduler = BackgroundScheduler()
         self.scrapers = [
-            IndeedScraper(),
             LinkedInScraper(),
-            WelcomeToTheJungleScraper(),
-            StagiairesMaScraper(), 
+            RemoteOKScraper(),
+            # IndeedScraper(),
         ]
 
     def scrape_all_sites(self):

@@ -109,7 +109,8 @@ interface SearchFiltersProps {
 const SOURCE_OPTIONS = [
   { label: 'All platforms', value: '' },
   { label: 'LinkedIn', value: 'LinkedIn' },
-  { label: 'Indeed', value: 'Indeed' }
+  { label: 'Indeed', value: 'Indeed' },
+  { label: "RemoteOk", value: 'RemoteOk'}
 ];
 
 export const SearchFilters = ({
