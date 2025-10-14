@@ -1,106 +1,81 @@
 import requests
-from bs4 import BeautifulSoup
 from typing import List, Dict
-import time
-import random
+from bs4 import BeautifulSoup # <-- ADD THIS IMPORT
 from scrapers.base_scraper import BaseScraper
-
-
-# ============================================================================
-# 1. REMOTEOK - HAS PUBLIC API! (BEST OPTION)
-# ============================================================================
+from config import REMOTEOK_API_URL
 
 class RemoteOKScraper(BaseScraper):
-    """
-    RemoteOK - Public API for remote jobs
-    
-    PROS:
-    - Public API (no scraping needed!)
-    - No rate limits
-    - No authentication
-    - JSON response
-    - Perfect for remote internships
-    
-    CONS:
-    - Only remote positions
-    - Smaller database than Indeed
-    
-    Website: https://remoteok.com/
-    API: https://remoteok.com/api
-    """
     def __init__(self):
         super().__init__("RemoteOK")
-        self.api_url = "https://remoteok.com/api"
+        self.api_url = REMOTEOK_API_URL
         
     def scrape(self, keywords: List[str], locations: List[str] = None) -> List[Dict]:
-        """
-        Note: RemoteOK is remote-only, so locations are ignored
-        """
+        print(f"\n🌍 [RemoteOK] Fetching jobs from API...")
         all_results = []
-        
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json'
-        }
-        
-        print(f"\n🌍 Scraping RemoteOK API...")
-        
         try:
-            response = requests.get(self.api_url, headers=headers, timeout=10)
+            response = requests.get(self.api_url, timeout=20)
             response.raise_for_status()
             
             jobs = response.json()
+            if not jobs or not isinstance(jobs, list) or len(jobs) < 2:
+                print("⚠️ [RemoteOK] API returned no job data.")
+                return []
             
-            # First item is metadata, skip it
-            if jobs and isinstance(jobs, list):
-                jobs = jobs[1:]
-            
-            print(f"✓ Fetched {len(jobs)} total jobs from RemoteOK")
-            
-            # Filter for internships and keywords
+            jobs = jobs[1:]
+            print(f"✓ [RemoteOK] Fetched {len(jobs)} total remote jobs.")
+
             for job in jobs:
                 if self._matches_criteria(job, keywords):
-                    all_results.append({
-                        'job_title': job.get('position', 'N/A'),
-                        'company_name': job.get('company', 'Unknown Company'),
-                        'location': job.get('location', 'Remote'),
-                        'date_posted': job.get('date', 'Recently'),
-                        'employment_type': 'Internship',
-                        'job_description': job.get('description', '')[:500],
-                        'apply_link': job.get('url', ''),
-                        'salary': job.get('salary_range', 'Not specified'),
-                        'tags': ', '.join(job.get('tags', [])),
-                        'source_site': self.source_site
-                    })
+                    all_results.append(self._format_job(job))
             
-            print(f"✅ Found {len(all_results)} matching internships on RemoteOK")
+            print(f"✅ [RemoteOK] Found {len(all_results)} matching internships after filtering.")
             
-        except Exception as e:
-            print(f"❌ RemoteOK API error: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            print(f"❌ [RemoteOK] API request failed: {e}")
         
         return all_results
     
     def _matches_criteria(self, job: dict, keywords: List[str]) -> bool:
-        """Check if job matches internship criteria"""
-        position = job.get('position', '').lower()
-        tags = [tag.lower() for tag in job.get('tags', [])]
-        description = job.get('description', '').lower()
-        
-        # Must be internship
-        is_internship = any(term in position or term in tags or term in description 
-                           for term in ['intern', 'internship', 'trainee', 'graduate program'])
+        text_to_check = (
+            job.get('position', '') + ' ' + 
+            job.get('description', '') + ' ' +
+            ' '.join(job.get('tags', []))
+        ).lower()
+
+        internship_terms = ['intern', 'internship', 'trainee', 'stage']
+        is_internship = any(term in text_to_check for term in internship_terms)
         
         if not is_internship:
             return False
-        
-        # Check if matches any keyword
-        if keywords:
-            keyword_match = any(
-                keyword.lower() in position or 
-                keyword.lower() in description or
-                any(keyword.lower() in tag for tag in tags)
-                for keyword in keywords
-            )
-            return keyword_match
-        
+
+        if keywords and not any(kw.lower() in text_to_check for kw in keywords):
+            return False
+            
         return True
+
+    def _format_job(self, job: dict) -> Dict:
+        """
+        Formats the API response, now with HTML parsing for the description.
+        """
+        salary_min = job.get('salary_min', 0)
+        salary_max = job.get('salary_max', 0)
+        salary = f"${salary_min} - ${salary_max}" if salary_min > 0 else "Not specified"
+
+        # --- FIX: Parse the HTML description ---
+        raw_description = job.get('description', '')
+        # Use BeautifulSoup to get clean text from the HTML block
+        soup = BeautifulSoup(raw_description, 'html.parser')
+        clean_description = soup.get_text(separator='\n', strip=True)
+        # --- END FIX ---
+
+        return {
+            'job_title': job.get('position', 'N/A'),
+            'company_name': job.get('company', 'N/A'),
+            'location': 'Remote',
+            'date_posted': job.get('date', 'Recently'),
+            'employment_type': 'Internship',
+            'job_description': clean_description, # <-- Use the cleaned description
+            'apply_link': job.get('url', ''),
+            'salary': salary,
+            'source_site': self.source_site
+        }
