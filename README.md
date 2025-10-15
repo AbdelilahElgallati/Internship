@@ -16,7 +16,7 @@ A complete internship aggregation system with automated scraping from multiple j
 ### Backend (Python)
 - **FastAPI**: REST API server
 - **BeautifulSoup & Requests**: Web scraping
-- **APScheduler**: Automated 6-hour scraping
+- **APScheduler**: Automated 4-hour scraping
 - **Supabase**: Database client
 
 ### Frontend (React + TypeScript)
@@ -140,3 +140,112 @@ Edit `SCRAPE_KEYWORDS` in `backend/config.py`
 ## License
 
 MIT
+# InternHub Frontend
+
+A modern React + TypeScript dashboard for searching and visualizing internship opportunities, powered by Supabase.
+
+## Features
+
+- **Live Search & Filtering:**  
+  Search internships by job title, company, description, location, and source.  
+  Filter and sort results with instant feedback.
+
+- **Responsive UI:**  
+  Beautiful, mobile-friendly design using Tailwind CSS and Lucide icons.
+
+- **Analytics Dashboard:**  
+  View real-time statistics: total internships, top sources, locations, and companies.
+
+- **Pagination:**  
+  Browse large result sets with fast, animated pagination.
+
+- **Supabase Integration:**  
+  Fetches data directly from Supabase tables and RPC functions.
+
+## Tech Stack
+
+- **React 18** with functional components and hooks
+- **TypeScript** for type safety
+- **Vite** for fast development and builds
+- **Tailwind CSS** for styling
+- **Lucide React** for icons
+- **Supabase JS Client** for backend data
+
+## Folder Structure
+
+```
+src/
+├── App.tsx                # Main app component
+├── main.tsx               # Entry point
+├── index.css              # Tailwind base styles
+├── lib/
+│   └── supabase.ts        # Supabase client & types
+├── hooks/
+│   ├── useInternships.ts  # Custom hook for internships data
+│   └── useLastUpdate.ts   # Custom hook for last update info
+└── components/
+    ├── InternshipCard.tsx # Card UI for each internship
+    ├── SearchFilters.tsx  # Search/filter/sort controls
+    └── StatsDashboard.tsx # Analytics dashboard
+```
+
+## Usage
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Start development server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### 3. Environment Variables
+
+Set your Supabase project credentials in `.env`:
+
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
+## How It Works
+
+- **Internship Data:**  
+  Fetched from the `internships` table in Supabase, with support for keyword, location, and source filters.
+
+- **Statistics:**  
+  Uses the `get_internship_statistics` RPC function for aggregated analytics.
+
+- **UI Components:**  
+  - [`InternshipCard`](src/components/InternshipCard.tsx): Displays job details and apply link.
+  - [`SearchFilters`](src/components/SearchFilters.tsx): Controls for searching, filtering, and sorting.
+  - [`StatsDashboard`](src/components/StatsDashboard.tsx): Shows key metrics and distributions.
+
+- **Hooks:**  
+  - [`useInternships`](src/hooks/useInternships.ts): Manages internship data and filters.
+  - [`useLastUpdate`](src/hooks/useLastUpdate.ts): Tracks last scraping update.
+
+## Customization
+
+- **Add new filters:**  
+  Extend [`useInternships`](src/hooks/useInternships.ts) and [`SearchFilters`](src/components/SearchFilters.tsx).
+
+- **Change styling:**  
+  Edit [`index.css`](src/index.css) and Tailwind config.
+
+- **Connect to other Supabase tables:**  
+  Update [`supabase.ts`](src/lib/supabase.ts) with new types and queries.
+
+## License
+
+MIT
+
+---
+
+For backend/API setup, see the main project README.

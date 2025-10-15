@@ -36,7 +36,7 @@ class LinkedInScraper(BaseScraper):
         for page in range(LINKEDIN_MAX_PAGES):
             start = page * 25
             params = {
-                'keywords': f"{keyword} internship", # Add "internship" to narrow search
+                'keywords': f"{keyword} internship", 
                 'location': location,
                 'f_TPR': f'r{LINKEDIN_DAYS_AGO * 24 * 3600}',
                 'f_JT': 'I', # Job Type: Internship
