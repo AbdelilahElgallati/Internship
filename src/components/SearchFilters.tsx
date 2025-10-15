@@ -1,230 +1,87 @@
-// import { Search, MapPin, Filter, X } from 'lucide-react';
-
-// interface SearchFiltersProps {
-//   keyword: string;
-//   location: string;
-//   sourceSite: string;
-//   onKeywordChange: (value: string) => void;
-//   onLocationChange: (value: string) => void;
-//   onSourceSiteChange: (value: string) => void;
-//   onClearFilters: () => void;
-// }
-
-// export const SearchFilters = ({
-//   keyword,
-//   location,
-//   sourceSite,
-//   onKeywordChange,
-//   onLocationChange,
-//   onSourceSiteChange,
-//   onClearFilters
-// }: SearchFiltersProps) => {
-//   const hasActiveFilters = keyword || location || sourceSite;
-
-//   return (
-//     <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-//       <div className="flex items-center justify-between mb-4">
-//         <div className="flex items-center space-x-2">
-//           <Filter className="w-5 h-5 text-teal-600" />
-//           <h2 className="text-lg font-semibold text-gray-900">Search & Filter</h2>
-//         </div>
-//         {hasActiveFilters && (
-//           <button
-//             onClick={onClearFilters}
-//             className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-//           >
-//             <X className="w-4 h-4" />
-//             <span>Clear filters</span>
-//           </button>
-//         )}
-//       </div>
-
-//       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//         <div className="relative">
-//           <label htmlFor="keyword" className="block text-sm font-medium text-gray-700 mb-2">
-//             Keyword
-//           </label>
-//           <div className="relative">
-//             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-//             <input
-//               id="keyword"
-//               type="text"
-//               placeholder="Search by title or description..."
-//               value={keyword}
-//               onChange={(e) => onKeywordChange(e.target.value)}
-//               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
-//             />
-//           </div>
-//         </div>
-
-//         <div className="relative">
-//           <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-//             Location
-//           </label>
-//           <div className="relative">
-//             <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-//             <input
-//               id="location"
-//               type="text"
-//               placeholder="City or country..."
-//               value={location}
-//               onChange={(e) => onLocationChange(e.target.value)}
-//               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
-//             />
-//           </div>
-//         </div>
-
-//         <div>
-//           <label htmlFor="source" className="block text-sm font-medium text-gray-700 mb-2">
-//             Source Site
-//           </label>
-//           <select
-//             id="source"
-//             value={sourceSite}
-//             onChange={(e) => onSourceSiteChange(e.target.value)}
-//             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-white"
-//           >
-//             <option value="">All Sources</option>
-//             <option value="LinkedIn">LinkedIn</option>
-//             <option value="Indeed">Indeed</option>
-//           </select>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-import { Search, MapPin, Filter, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Search, MapPin, Filter } from 'lucide-react';
 
 interface SearchFiltersProps {
-  keyword: string;
-  location: string;
-  sourceSite: string;
-  onKeywordChange: (value: string) => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  locationFilter: string;
   onLocationChange: (value: string) => void;
-  onSourceSiteChange: (value: string) => void;
-  onClearFilters: () => void;
+  sourceFilter: string;
+  onSourceChange: (value: string) => void;
+  sortBy: string;
+  onSortChange: (value: string) => void;
+  availableLocations: string[];
+  availableSources: string[];
 }
 
-const SOURCE_OPTIONS = [
-  { label: 'All platforms', value: '' },
-  { label: 'LinkedIn', value: 'LinkedIn' },
-  { label: 'Indeed', value: 'Indeed' },
-  { label: "RemoteOk", value: 'RemoteOk'}
-];
-
-export const SearchFilters = ({
-  keyword,
-  location,
-  sourceSite,
-  onKeywordChange,
+export default function SearchFilters({
+  searchQuery,
+  onSearchChange,
+  locationFilter,
   onLocationChange,
-  onSourceSiteChange,
-  onClearFilters
-}: SearchFiltersProps) => {
-  const hasActiveFilters = Boolean(keyword || location || sourceSite);
-
+  sourceFilter,
+  onSourceChange,
+  sortBy,
+  onSortChange,
+  availableLocations,
+  availableSources,
+}: SearchFiltersProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-xl backdrop-blur">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
-            <Filter className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Smart search filters</h2>
-            <p className="text-sm text-slate-500">
-              Combine keywords, locations, and sources to narrow the results instantly.
-            </p>
-          </div>
-        </div>
+    <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type="text"
+          placeholder="Search job titles and keywords..."
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
+        />
+      </div>
 
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={onClearFilters}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900"
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="relative">
+          <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <select
+            value={locationFilter}
+            onChange={(e) => onLocationChange(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none appearance-none bg-white transition-colors cursor-pointer"
           >
-            <X className="h-4 w-4" />
-            Clear filters
-          </button>
-        )}
-      </div>
-
-      <div className="mt-6 grid gap-5 md:grid-cols-2">
-        <div className="space-y-2">
-          <label htmlFor="keyword" className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <Search className="h-4 w-4 text-emerald-500" />
-            Keyword
-          </label>
-          <div className="relative">
-            <input
-              id="keyword"
-              type="text"
-              placeholder="Search by title, tech stack, or responsibilities"
-              value={keyword}
-              onChange={(e) => onKeywordChange(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="location" className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <MapPin className="h-4 w-4 text-emerald-500" />
-            Location
-          </label>
-          <div className="relative">
-            <input
-              id="location"
-              type="text"
-              placeholder="City, region, or remote-friendly keywords"
-              value={location}
-              onChange={(e) => onLocationChange(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3 md:col-span-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <Sparkles className="h-4 w-4 text-emerald-500" />
-            Source platform
-          </label>
-          <div className="relative">
-            <select
-              id="source"
-              value={sourceSite}
-              onChange={(e) => onSourceSiteChange(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-            >
-              {SOURCE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {SOURCE_OPTIONS.map((option) => (
-              <button
-                key={option.value || 'all'}
-                type="button"
-                onClick={() => onSourceSiteChange(option.value)}
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
-                  sourceSite === option.value
-                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-700'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900'
-                }`}
-              >
-                {option.label}
-              </button>
+            <option value="">All Locations</option>
+            {availableLocations.map((loc) => (
+              <option key={loc} value={loc}>
+                {loc}
+              </option>
             ))}
-          </div>
+          </select>
         </div>
+
+        <div className="relative">
+          <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <select
+            value={sourceFilter}
+            onChange={(e) => onSourceChange(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none appearance-none bg-white transition-colors cursor-pointer"
+          >
+            <option value="">All Sources</option>
+            {availableSources.map((source) => (
+              <option key={source} value={source}>
+                {source}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <select
+          value={sortBy}
+          onChange={(e) => onSortChange(e.target.value)}
+          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none appearance-none bg-white transition-colors cursor-pointer"
+        >
+          <option value="recent">Most Recent</option>
+          <option value="oldest">Oldest First</option>
+          <option value="company_asc">Company A-Z</option>
+          <option value="company_desc">Company Z-A</option>
+        </select>
       </div>
-    </section>
+    </div>
   );
-};
+}

@@ -1,46 +1,207 @@
-// import { Header } from './components/Header';
-// import { SearchFilters } from './components/SearchFilters';
-// import { InternshipList } from './components/InternshipList';
-// import { useInternships } from './hooks/useInternships';
+// import { useState, useEffect } from 'react';
+// import { Search, BarChart3, Loader2 } from 'lucide-react';
+// import { supabase, Internship, Statistics } from './lib/supabase';
+// import SearchFilters from './components/SearchFilters';
+// import InternshipCard from './components/InternshipCard';
+// import StatsDashboard from './components/StatsDashboard';
 
 // function App() {
-//   const {
-//     internships,
-//     loading,
-//     error,
-//     filters,
-//     updateFilters,
-//     clearFilters
-//   } = useInternships();
+//   const [activeTab, setActiveTab] = useState<'search' | 'stats'>('search');
+//   const [internships, setInternships] = useState<Internship[]>([]);
+//   const [filteredInternships, setFilteredInternships] = useState<Internship[]>([]);
+//   const [statistics, setStatistics] = useState<Statistics | null>(null);
+//   const [isLoading, setIsLoading] = useState(true);
+//   const [isStatsLoading, setIsStatsLoading] = useState(false);
+
+//   const [searchQuery, setSearchQuery] = useState('');
+//   const [locationFilter, setLocationFilter] = useState('');
+//   const [sourceFilter, setSourceFilter] = useState('');
+//   const [sortBy, setSortBy] = useState('recent');
+
+//   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+//   const [availableSources, setAvailableSources] = useState<string[]>([]);
+
+//   useEffect(() => {
+//     fetchInternships();
+//   }, []);
+
+//   useEffect(() => {
+//     if (activeTab === 'stats' && !statistics) {
+//       fetchStatistics();
+//     }
+//   }, [activeTab]);
+
+//   useEffect(() => {
+//     applyFiltersAndSort();
+//   }, [internships, searchQuery, locationFilter, sourceFilter, sortBy]);
+
+//   const fetchInternships = async () => {
+//     try {
+//       setIsLoading(true);
+//       const { data, error } = await supabase
+//         .from('internships')
+//         .select('*')
+//         .order('date_posted', { ascending: false });
+
+//       if (error) throw error;
+
+//       const internshipsData = data || [];
+//       setInternships(internshipsData);
+
+//       const locations = [...new Set(internshipsData.map((i) => i.location))].filter(Boolean).sort();
+//       const sources = [...new Set(internshipsData.map((i) => i.source_site))].filter(Boolean).sort();
+
+//       setAvailableLocations(locations);
+//       setAvailableSources(sources);
+//     } catch (error) {
+//       console.error('Error fetching internships:', error);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const fetchStatistics = async () => {
+//     try {
+//       setIsStatsLoading(true);
+//       const { data, error } = await supabase.rpc('get_internship_statistics');
+
+//       if (error) throw error;
+//       setStatistics(data);
+//     } catch (error) {
+//       console.error('Error fetching statistics:', error);
+//     } finally {
+//       setIsStatsLoading(false);
+//     }
+//   };
+
+//   const applyFiltersAndSort = () => {
+//     let filtered = [...internships];
+
+//     if (searchQuery) {
+//       const query = searchQuery.toLowerCase();
+//       filtered = filtered.filter(
+//         (i) =>
+//           i.job_title.toLowerCase().includes(query) ||
+//           i.job_description.toLowerCase().includes(query)
+//       );
+//     }
+
+//     if (locationFilter) {
+//       filtered = filtered.filter((i) => i.location === locationFilter);
+//     }
+
+//     if (sourceFilter) {
+//       filtered = filtered.filter((i) => i.source_site === sourceFilter);
+//     }
+
+//     switch (sortBy) {
+//       case 'recent':
+//         filtered.sort((a, b) => new Date(b.date_posted).getTime() - new Date(a.date_posted).getTime());
+//         break;
+//       case 'oldest':
+//         filtered.sort((a, b) => new Date(a.date_posted).getTime() - new Date(b.date_posted).getTime());
+//         break;
+//       case 'company_asc':
+//         filtered.sort((a, b) => a.company_name.localeCompare(b.company_name));
+//         break;
+//       case 'company_desc':
+//         filtered.sort((a, b) => b.company_name.localeCompare(a.company_name));
+//         break;
+//     }
+
+//     setFilteredInternships(filtered);
+//   };
 
 //   return (
-//     <div className="min-h-screen bg-gray-50">
-//       <Header />
+//     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50">
+//       <header className="bg-white shadow-md sticky top-0 z-50">
+//         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+//           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+//             <div>
+//               <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
+//                 InternHub
+//               </h1>
+//               <p className="text-gray-600 text-sm mt-1">Find your dream internship</p>
+//             </div>
+//             <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+//               <button
+//                 onClick={() => setActiveTab('search')}
+//                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+//                   activeTab === 'search'
+//                     ? 'bg-white text-blue-600 shadow-md'
+//                     : 'text-gray-600 hover:text-gray-900'
+//                 }`}
+//               >
+//                 <Search className="w-5 h-5" />
+//                 Search
+//               </button>
+//               <button
+//                 onClick={() => setActiveTab('stats')}
+//                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+//                   activeTab === 'stats'
+//                     ? 'bg-white text-blue-600 shadow-md'
+//                     : 'text-gray-600 hover:text-gray-900'
+//                 }`}
+//               >
+//                 <BarChart3 className="w-5 h-5" />
+//                 Statistics
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </header>
 
 //       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-//         <div className="mb-8">
-//           <SearchFilters
-//             keyword={filters.keyword}
-//             location={filters.location}
-//             sourceSite={filters.sourceSite}
-//             onKeywordChange={(value) => updateFilters({ keyword: value })}
-//             onLocationChange={(value) => updateFilters({ location: value })}
-//             onSourceSiteChange={(value) => updateFilters({ sourceSite: value })}
-//             onClearFilters={clearFilters}
-//           />
-//         </div>
+//         {activeTab === 'search' ? (
+//           <div className="space-y-6">
+//             <SearchFilters
+//               searchQuery={searchQuery}
+//               onSearchChange={setSearchQuery}
+//               locationFilter={locationFilter}
+//               onLocationChange={setLocationFilter}
+//               sourceFilter={sourceFilter}
+//               onSourceChange={setSourceFilter}
+//               sortBy={sortBy}
+//               onSortChange={setSortBy}
+//               availableLocations={availableLocations}
+//               availableSources={availableSources}
+//             />
 
-//         <InternshipList
-//           internships={internships}
-//           loading={loading}
-//           error={error}
-//         />
+//             {isLoading ? (
+//               <div className="flex flex-col items-center justify-center py-20">
+//                 <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+//                 <p className="text-gray-600 text-lg">Loading internships...</p>
+//               </div>
+//             ) : filteredInternships.length === 0 ? (
+//               <div className="text-center py-20">
+//                 <div className="text-6xl mb-4">🔍</div>
+//                 <h3 className="text-2xl font-bold text-gray-900 mb-2">No internships found</h3>
+//                 <p className="text-gray-600">Try adjusting your search filters</p>
+//               </div>
+//             ) : (
+//               <>
+//                 <div className="flex justify-between items-center">
+//                   <p className="text-gray-700 font-medium">
+//                     <span className="text-blue-600 font-bold">{filteredInternships.length}</span> internships found
+//                   </p>
+//                 </div>
+//                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+//                   {filteredInternships.map((internship) => (
+//                     <InternshipCard key={internship.id} internship={internship} />
+//                   ))}
+//                 </div>
+//               </>
+//             )}
+//           </div>
+//         ) : (
+//           <StatsDashboard statistics={statistics} isLoading={isStatsLoading} />
+//         )}
 //       </main>
 
 //       <footer className="bg-white border-t border-gray-200 mt-16">
 //         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 //           <p className="text-center text-gray-600 text-sm">
-//             Internship Aggregator - Automatically updated every 6 hours from LinkedIn and Indeed
+//             InternHub - Your gateway to amazing internship opportunities
 //           </p>
 //         </div>
 //       </footer>
@@ -50,144 +211,227 @@
 
 // export default App;
 
-import { useMemo } from 'react';
-import { Header, type HeaderStats } from './components/Header';
-import { SearchFilters } from './components/SearchFilters';
-import { InternshipList } from './components/InternshipList';
-import { InsightsPanel, type InsightsData } from './components/InsightsPanel';
-import { useInternships } from './hooks/useInternships';
-import { useLastUpdate } from './hooks/useLastUpdate';
-import type { Internship } from './lib/supabase';
 
-const computeAnalytics = (
-  internships: Internship[]
-): { stats: HeaderStats; insights: InsightsData } => {
-  const sourceMap = new Map<string, number>();
-  const locationMap = new Map<string, number>();
-  const companyMap = new Map<string, number>();
-  let remoteCount = 0;
-  let newThisWeek = 0;
-  const now = new Date();
-
-  internships.forEach((internship) => {
-    const source = internship.source_site?.trim();
-    if (source) {
-      sourceMap.set(source, (sourceMap.get(source) ?? 0) + 1);
-    }
-
-    const location = internship.location?.trim();
-    if (location) {
-      locationMap.set(location, (locationMap.get(location) ?? 0) + 1);
-      if (location.toLowerCase().includes('remote')) {
-        remoteCount += 1;
-      }
-    }
-
-    const company = internship.company_name?.trim();
-    if (company) {
-      companyMap.set(company, (companyMap.get(company) ?? 0) + 1);
-    }
-
-    if (internship.date_posted) {
-      const postedDate = new Date(internship.date_posted);
-      if (!Number.isNaN(postedDate.getTime())) {
-        const diffDays = (now.getTime() - postedDate.getTime()) / 86400000;
-        if (diffDays >= 0 && diffDays <= 7) {
-          newThisWeek += 1;
-        }
-      }
-    }
-  });
-
-  const sortEntries = (map: Map<string, number>) =>
-    Array.from(map.entries())
-      .filter(([name]) => name.trim().length > 0)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
-
-  const topSources = sortEntries(sourceMap);
-  const topCompanies = sortEntries(companyMap);
-  const topLocations = sortEntries(locationMap);
-
-  return {
-    stats: {
-      total: internships.length,
-      remoteCount,
-      newThisWeek,
-      totalCompanies: companyMap.size,
-      topSource: topSources[0] ?? null
-    },
-    insights: {
-      topCompanies,
-      topLocations,
-      topSources
-    }
-  };
-};
+import { useState, useEffect } from 'react';
+import { Search, BarChart3, Loader2 } from 'lucide-react';
+import { supabase, Internship, Statistics } from './lib/supabase';
+import SearchFilters from './components/SearchFilters';
+import InternshipCard from './components/InternshipCard';
+import StatsDashboard from './components/StatsDashboard';
 
 function App() {
-  const {
-    internships,
-    loading,
-    error,
-    filters,
-    updateFilters,
-    clearFilters
-  } = useInternships();
-  const { lastUpdate, loading: lastUpdateLoading } = useLastUpdate();
+  const [activeTab, setActiveTab] = useState<'search' | 'stats'>('search');
+  const [internships, setInternships] = useState<Internship[]>([]);
+  const [filteredInternships, setFilteredInternships] = useState<Internship[]>([]);
+  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
 
-  const { stats, insights } = useMemo(
-    () => computeAnalytics(internships),
-    [internships]
-  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
+  const [sortBy, setSortBy] = useState('recent');
+
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [availableSources, setAvailableSources] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchInternships();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'stats' && !statistics) {
+      fetchStatistics();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    applyFiltersAndSort();
+  }, [internships, searchQuery, locationFilter, sourceFilter, sortBy]);
+
+  const fetchInternships = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('internships')
+        .select('*')
+        .order('date_posted', { ascending: false });
+
+      if (error) throw error;
+
+      const internshipsData = data || [];
+      setInternships(internshipsData);
+
+      const locations = [...new Set(internshipsData.map((i) => i.location))].filter(Boolean).sort();
+      const sources = [...new Set(internshipsData.map((i) => i.source_site))].filter(Boolean).sort();
+
+      setAvailableLocations(locations);
+      setAvailableSources(sources);
+    } catch (error) {
+      console.error('Error fetching internships:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchStatistics = async () => {
+    try {
+      setIsStatsLoading(true);
+      const { data, error } = await supabase.rpc('get_internship_statistics');
+      console.log("The statistiques:")
+      console.log(data)
+
+      if (error) throw error;
+
+      if (data) {
+        // ✨ FIX: Transform the objects into arrays of objects
+        const parsedData: Statistics = {
+          total_count: data.total_internships || 0,
+          by_source: data.by_source ? Object.entries(data.by_source).map(([key, value]) => ({ source_site: key, count: value as number })) : [],
+          top_locations: data.top_10_locations ? Object.entries(data.top_10_locations).map(([key, value]) => ({ location: key, count: value as number })) : [],
+          top_companies: data.top_10_companies ? Object.entries(data.top_10_companies).map(([key, value]) => ({ company_name: key, count: value as number })) : [],
+        };
+        setStatistics(parsedData);
+      } else {
+        setStatistics(null);
+      }
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    } finally {
+      setIsStatsLoading(false);
+    }
+  };
+
+
+  const applyFiltersAndSort = () => {
+    let filtered = [...internships];
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (i) =>
+          i.job_title.toLowerCase().includes(query) ||
+          i.job_description.toLowerCase().includes(query)
+      );
+    }
+
+    if (locationFilter) {
+      filtered = filtered.filter((i) => i.location === locationFilter);
+    }
+
+    if (sourceFilter) {
+      filtered = filtered.filter((i) => i.source_site === sourceFilter);
+    }
+
+    switch (sortBy) {
+      case 'recent':
+        filtered.sort((a, b) => new Date(b.date_posted).getTime() - new Date(a.date_posted).getTime());
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.date_posted).getTime() - new Date(b.date_posted).getTime());
+        break;
+      case 'company_asc':
+        filtered.sort((a, b) => a.company_name.localeCompare(b.company_name));
+        break;
+      case 'company_desc':
+        filtered.sort((a, b) => b.company_name.localeCompare(a.company_name));
+        break;
+    }
+
+    setFilteredInternships(filtered);
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(45,212,191,0.18),transparent_55%),radial-gradient(circle_at_bottom,_rgba(59,130,246,0.12),transparent_60%)]" />
-
-      <Header
-        stats={stats}
-        lastUpdate={lastUpdate}
-        loadingLastUpdate={lastUpdateLoading}
-      />
-
-
-
-      <main className="relative z-10 -mt-24 md:-mt-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-          <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-            <div className="space-y-6">
-              <SearchFilters
-                keyword={filters.keyword}
-                location={filters.location}
-                sourceSite={filters.sourceSite}
-                onKeywordChange={(value) => updateFilters({ keyword: value })}
-                onLocationChange={(value) => updateFilters({ location: value })}
-                onSourceSiteChange={(value) => updateFilters({ sourceSite: value })}
-                onClearFilters={clearFilters}
-              />
-
-              <InsightsPanel insights={insights} loading={loading} />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50">
+      <header className="bg-white shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
+                InternHub
+              </h1>
+              <p className="text-gray-600 text-sm mt-1">Find your dream internship</p>
             </div>
-
-            <InternshipList
-              internships={internships}
-              loading={loading}
-              error={error}
-            />
+            <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+              <button
+                onClick={() => setActiveTab('search')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  activeTab === 'search'
+                    ? 'bg-white text-blue-600 shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Search className="w-5 h-5" />
+                Search
+              </button>
+              <button
+                onClick={() => setActiveTab('stats')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  activeTab === 'stats'
+                    ? 'bg-white text-blue-600 shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <BarChart3 className="w-5 h-5" />
+                Statistics
+              </button>
+            </div>
           </div>
         </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'search' ? (
+          <div className="space-y-6">
+            <SearchFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              locationFilter={locationFilter}
+              onLocationChange={setLocationFilter}
+              sourceFilter={sourceFilter}
+              onSourceChange={setSourceFilter}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              availableLocations={availableLocations}
+              availableSources={availableSources}
+            />
+
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+                <p className="text-gray-600 text-lg">Loading internships...</p>
+              </div>
+            ) : filteredInternships.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">No internships found</h3>
+                <p className="text-gray-600">Try adjusting your search filters</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center">
+                  <p className="text-gray-700 font-medium">
+                    <span className="text-blue-600 font-bold">{filteredInternships.length}</span> internships found
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredInternships.map((internship) => (
+                    <InternshipCard key={internship.id} internship={internship} />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <StatsDashboard statistics={statistics} isLoading={isStatsLoading} />
+        )}
       </main>
 
-      <footer className="relative z-10 border-t border-white/10 bg-slate-950/80 backdrop-blur py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center gap-3 text-center text-sm text-slate-300 md:flex-row md:justify-between md:text-left">
-            <p>Internship Aggregator · Automatically refreshed every 6 hours</p>
-            <p className="text-slate-400">
-              Built to help emerging talent discover their next opportunity.
-            </p>
-          </div>
+      <footer className="bg-white border-t border-gray-200 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <p className="text-center text-gray-600 text-sm">
+            InternHub - Your gateway to amazing internship opportunities
+          </p>
         </div>
       </footer>
     </div>

@@ -1,110 +1,86 @@
-import { MapPin, Calendar, Building2, ExternalLink, Tag } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, ExternalLink } from 'lucide-react';
 import { Internship } from '../lib/supabase';
 
 interface InternshipCardProps {
   internship: Internship;
 }
 
-const formatDate = (dateString: string) => {
-  if (!dateString) {
-    return null;
-  }
+export default function InternshipCard({ internship }: InternshipCardProps) {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-};
+  const getSourceColor = (source: string) => {
+    const colors: { [key: string]: string } = {
+      LinkedIn: 'bg-blue-100 text-blue-700',
+      Indeed: 'bg-green-100 text-green-700',
+      Glassdoor: 'bg-teal-100 text-teal-700',
+      default: 'bg-gray-100 text-gray-700',
+    };
+    return colors[source] || colors.default;
+  };
 
-const getSourceStyles = (source: string) => {
-  switch (source) {
-    case 'LinkedIn':
-      return 'from-blue-500/90 to-blue-500/70 text-white';
-    case 'Indeed':
-      return 'from-emerald-500/90 to-emerald-500/70 text-white';
-    default:
-      return 'from-slate-500/80 to-slate-500/60 text-white';
-  }
-};
-
-export const InternshipCard = ({ internship }: InternshipCardProps) => {
-  const formattedDate = formatDate(internship.date_posted);
-  const sourceStyles = getSourceStyles(internship.source_site);
+  const truncateDescription = (text: string, maxLength: number = 150) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-500 to-sky-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-2">
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <Building2 className="h-3.5 w-3.5" />
-              {internship.company_name}
-            </span>
-            <h3 className="text-2xl font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
-              {internship.job_title}
-            </h3>
-          </div>
-          <span className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r px-3 py-1 text-xs font-semibold uppercase tracking-wide ${sourceStyles}`}>
-            {internship.source_site}
-          </span>
+    <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 hover:border-blue-300 group">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1">
+          <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+            {internship.job_title}
+          </h3>
+          <p className="text-lg text-gray-700 mt-1 font-medium">{internship.company_name}</p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-          {internship.location && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-emerald-500" />
-              <span className="font-medium text-slate-700">{internship.location}</span>
-            </div>
-          )}
-          {formattedDate && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-emerald-500" />
-              <span>Posted {formattedDate}</span>
-            </div>
-          )}
-          {internship.employment_type && (
-            <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-emerald-500" />
-              <span>{internship.employment_type}</span>
-            </div>
-          )}
-        </div>
-
-        {internship.job_description && (
-          <p className="text-sm leading-relaxed text-slate-600">
-            {internship.job_description}
-          </p>
-        )}
-
-        <div className="flex items-center justify-between border-t border-slate-200 pt-5">
-          <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-emerald-600">
-            <span className="rounded-full bg-emerald-500/10 px-3 py-1 font-semibold">
-              {internship.source_site}
-            </span>
-            {formattedDate && (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-500">
-                Updated {formattedDate}
-              </span>
-            )}
-          </div>
-          <a
-            href={internship.apply_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-slate-700"
-          >
-            Apply now
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        </div>
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getSourceColor(internship.source_site)} whitespace-nowrap ml-3`}>
+          {internship.source_site}
+        </span>
       </div>
-    </article>
+
+      <div className="space-y-2 mb-4">
+        <div className="flex items-center text-gray-600 text-sm">
+          <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+          <span className="line-clamp-1">{internship.location}</span>
+        </div>
+        <div className="flex items-center text-gray-600 text-sm">
+          <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+          <span>Posted {formatDate(internship.date_posted)}</span>
+        </div>
+        {internship.salary && (
+          <div className="flex items-center text-gray-600 text-sm">
+            <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="line-clamp-1">{internship.salary}</span>
+          </div>
+        )}
+      </div>
+
+      {internship.job_description && (
+        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+          {truncateDescription(internship.job_description)}
+        </p>
+      )}
+
+      <a
+        href={internship.apply_link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        Apply Now
+        <ExternalLink className="w-4 h-4 ml-2" />
+      </a>
+    </div>
   );
-};
+}
