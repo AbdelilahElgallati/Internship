@@ -8,7 +8,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 # --- Scheduler Configuration ---
-SCRAPE_INTERVAL_HOURS = 4
+SCRAPE_INTERVAL_HOURS = 2
 MAX_CONCURRENT_SCRAPERS = 3
 
 # --- General Scraping Parameters ---

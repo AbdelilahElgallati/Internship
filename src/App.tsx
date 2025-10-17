@@ -26,7 +26,6 @@ function App() {
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [availableSources, setAvailableSources] = useState<string[]>([]);
 
-  // Calculate pagination values
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredInternships.slice(indexOfFirstItem, indexOfLastItem);
@@ -48,32 +47,6 @@ function App() {
     setCurrentPage(1);
   }, [internships, searchQuery, locationFilter, sourceFilter, dateFilter, sortBy]);
 
-  // const fetchInternships = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const { data, error } = await supabase
-  //       .from('internships')
-  //       .select('*')
-  //       .order('date_posted', { ascending: false });
-
-  //     if (error) throw error;
-
-  //     const internshipsData = data || [];
-  //     setInternships(internshipsData);
-
-  //     const locations = [...new Set(internshipsData.map((i) => i.location))].filter(Boolean).sort();
-  //     const sources = [...new Set(internshipsData.map((i) => i.source_site))].filter(Boolean).sort();
-
-  //     setAvailableLocations(locations);
-  //     setAvailableSources(sources);
-  //   } catch (error) {
-  //     console.error('Error fetching internships:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // In the fetchInternships function, update the locations filtering:
   const fetchInternships = async () => {
     try {
       setIsLoading(true);
@@ -87,16 +60,16 @@ function App() {
       const internshipsData = data || [];
       setInternships(internshipsData);
 
-      // Filter out date-like strings from locations
       const locations = [...new Set(internshipsData.map((i) => i.location))]
         .filter(Boolean)
         .filter(location => {
-          // Check if the location string looks like a date
+          // Filter out date-like strings and invalid locations
           const isDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(location) ||
             /^\d{4}-\d{1,2}-\d{1,2}$/.test(location) ||
             /^(today|yesterday|tomorrow|week|month)$/i.test(location);
-          return !isDate;
+          return !isDate && location.length > 2; // Filter out very short strings
         })
+        .map(location => location.trim())
         .sort();
 
       const sources = [...new Set(internshipsData.map((i) => i.source_site))].filter(Boolean).sort();
@@ -140,28 +113,32 @@ function App() {
   const applyFiltersAndSort = () => {
     let filtered = [...internships];
 
-    // Search filter
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
         (i) =>
           i.job_title?.toLowerCase().includes(query) ||
           i.company_name?.toLowerCase().includes(query) ||
-          i.job_description?.toLowerCase().includes(query)
+          i.job_description?.toLowerCase().includes(query) ||
+          (i.location && (
+            i.location.toLowerCase().includes(query) ||
+            extractLocationParts(i.location).some(part =>
+              part.toLowerCase().includes(query)
+            )
+          ))
       );
     }
 
-    // Location filter
     if (locationFilter) {
-      filtered = filtered.filter((i) => i.location === locationFilter);
+      filtered = filtered.filter((i) =>
+        i.location && i.location.toLowerCase().includes(locationFilter.toLowerCase())
+      );
     }
 
-    // Source filter
     if (sourceFilter) {
       filtered = filtered.filter((i) => i.source_site === sourceFilter);
     }
 
-    // Date filter
     if (dateFilter) {
       const now = new Date();
       const internshipDate = (dateString: string) => new Date(dateString);
@@ -189,13 +166,10 @@ function App() {
           filtered = filtered.filter((i) => internshipDate(i.date_posted) >= oneMonthAgo);
           break;
         case 'specific':
-          // For specific date, you can add a date picker input
-          // For now, it will show all (you can implement specific date logic here)
           break;
       }
     }
 
-    // Sort
     switch (sortBy) {
       case 'recent':
         filtered.sort((a, b) => new Date(b.date_posted).getTime() - new Date(a.date_posted).getTime());
@@ -214,7 +188,16 @@ function App() {
     setFilteredInternships(filtered);
   };
 
-  // Pagination handlers
+  const extractLocationParts = (location: string): string[] => {
+    if (!location) return [];
+
+    const parts = location.split(',')
+      .map(part => part.trim())
+      .filter(part => part.length > 0);
+
+    return parts;
+  };
+
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -234,7 +217,6 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
@@ -289,8 +271,8 @@ function App() {
               <button
                 onClick={() => setActiveTab('search')}
                 className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${activeTab === 'search'
-                    ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg transform scale-105'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
+                  ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg transform scale-105'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
                   }`}
               >
                 <Search className="w-5 h-5" />
@@ -299,8 +281,8 @@ function App() {
               <button
                 onClick={() => setActiveTab('stats')}
                 className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${activeTab === 'stats'
-                    ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg transform scale-105'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
+                  ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg transform scale-105'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
                   }`}
               >
                 <BarChart3 className="w-5 h-5" />
@@ -399,8 +381,8 @@ function App() {
                         onClick={prevPage}
                         disabled={currentPage === 1}
                         className={`flex items-center px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${currentPage === 1
-                            ? 'text-gray-400 cursor-not-allowed bg-gray-100'
-                            : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+                          ? 'text-gray-400 cursor-not-allowed bg-gray-100'
+                          : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
                           }`}
                       >
                         <ChevronLeft className="w-4 h-4 mr-1" />
@@ -414,8 +396,8 @@ function App() {
                             key={page}
                             onClick={() => goToPage(page)}
                             className={`w-10 h-10 rounded-xl font-semibold transition-all duration-300 ${currentPage === page
-                                ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg scale-105'
-                                : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                              ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg scale-105'
+                              : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                               }`}
                           >
                             {page}
@@ -428,8 +410,8 @@ function App() {
                         onClick={nextPage}
                         disabled={currentPage === totalPages}
                         className={`flex items-center px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${currentPage === totalPages
-                            ? 'text-gray-400 cursor-not-allowed bg-gray-100'
-                            : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+                          ? 'text-gray-400 cursor-not-allowed bg-gray-100'
+                          : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
                           }`}
                       >
                         Next
