@@ -20,6 +20,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [sortBy, setSortBy] = useState('recent');
 
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
@@ -45,8 +46,34 @@ function App() {
     applyFiltersAndSort();
     // Reset to first page when filters change
     setCurrentPage(1);
-  }, [internships, searchQuery, locationFilter, sourceFilter, sortBy]);
+  }, [internships, searchQuery, locationFilter, sourceFilter, dateFilter, sortBy]);
 
+  // const fetchInternships = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const { data, error } = await supabase
+  //       .from('internships')
+  //       .select('*')
+  //       .order('date_posted', { ascending: false });
+
+  //     if (error) throw error;
+
+  //     const internshipsData = data || [];
+  //     setInternships(internshipsData);
+
+  //     const locations = [...new Set(internshipsData.map((i) => i.location))].filter(Boolean).sort();
+  //     const sources = [...new Set(internshipsData.map((i) => i.source_site))].filter(Boolean).sort();
+
+  //     setAvailableLocations(locations);
+  //     setAvailableSources(sources);
+  //   } catch (error) {
+  //     console.error('Error fetching internships:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // In the fetchInternships function, update the locations filtering:
   const fetchInternships = async () => {
     try {
       setIsLoading(true);
@@ -60,7 +87,18 @@ function App() {
       const internshipsData = data || [];
       setInternships(internshipsData);
 
-      const locations = [...new Set(internshipsData.map((i) => i.location))].filter(Boolean).sort();
+      // Filter out date-like strings from locations
+      const locations = [...new Set(internshipsData.map((i) => i.location))]
+        .filter(Boolean)
+        .filter(location => {
+          // Check if the location string looks like a date
+          const isDate = /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(location) ||
+            /^\d{4}-\d{1,2}-\d{1,2}$/.test(location) ||
+            /^(today|yesterday|tomorrow|week|month)$/i.test(location);
+          return !isDate;
+        })
+        .sort();
+
       const sources = [...new Set(internshipsData.map((i) => i.source_site))].filter(Boolean).sort();
 
       setAvailableLocations(locations);
@@ -102,6 +140,7 @@ function App() {
   const applyFiltersAndSort = () => {
     let filtered = [...internships];
 
+    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -112,14 +151,51 @@ function App() {
       );
     }
 
+    // Location filter
     if (locationFilter) {
       filtered = filtered.filter((i) => i.location === locationFilter);
     }
 
+    // Source filter
     if (sourceFilter) {
       filtered = filtered.filter((i) => i.source_site === sourceFilter);
     }
 
+    // Date filter
+    if (dateFilter) {
+      const now = new Date();
+      const internshipDate = (dateString: string) => new Date(dateString);
+
+      switch (dateFilter) {
+        case '1h':
+          filtered = filtered.filter((i) => {
+            const diffMs = now.getTime() - internshipDate(i.date_posted).getTime();
+            const diffHours = diffMs / (1000 * 60 * 60);
+            return diffHours <= 1;
+          });
+          break;
+        case 'today':
+          filtered = filtered.filter((i) => {
+            const internshipDay = internshipDate(i.date_posted);
+            return internshipDay.toDateString() === now.toDateString();
+          });
+          break;
+        case 'week':
+          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          filtered = filtered.filter((i) => internshipDate(i.date_posted) >= oneWeekAgo);
+          break;
+        case 'month':
+          const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          filtered = filtered.filter((i) => internshipDate(i.date_posted) >= oneMonthAgo);
+          break;
+        case 'specific':
+          // For specific date, you can add a date picker input
+          // For now, it will show all (you can implement specific date logic here)
+          break;
+      }
+    }
+
+    // Sort
     switch (sortBy) {
       case 'recent':
         filtered.sort((a, b) => new Date(b.date_posted).getTime() - new Date(a.date_posted).getTime());
@@ -162,18 +238,18 @@ function App() {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-    
+
     return pages;
   };
 
@@ -208,26 +284,24 @@ function App() {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex gap-2 bg-white/60 backdrop-blur-sm p-1.5 rounded-2xl shadow-inner border border-gray-200/60">
               <button
                 onClick={() => setActiveTab('search')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === 'search'
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${activeTab === 'search'
                     ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg transform scale-105'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
-                }`}
+                  }`}
               >
                 <Search className="w-5 h-5" />
                 Search
               </button>
               <button
                 onClick={() => setActiveTab('stats')}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === 'stats'
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${activeTab === 'stats'
                     ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg transform scale-105'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-white/80'
-                }`}
+                  }`}
               >
                 <BarChart3 className="w-5 h-5" />
                 Analytics
@@ -247,6 +321,8 @@ function App() {
               onLocationChange={setLocationFilter}
               sourceFilter={sourceFilter}
               onSourceChange={setSourceFilter}
+              dateFilter={dateFilter}
+              onDateChange={setDateFilter}
               sortBy={sortBy}
               onSortChange={setSortBy}
               availableLocations={availableLocations}
@@ -274,6 +350,7 @@ function App() {
                     setSearchQuery('');
                     setLocationFilter('');
                     setSourceFilter('');
+                    setDateFilter('');
                     setSortBy('recent');
                   }}
                   className="px-8 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-teal-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
@@ -315,17 +392,16 @@ function App() {
                     <div className="text-sm text-gray-600">
                       Page {currentPage} of {totalPages} • {filteredInternships.length} total internships
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       {/* Previous Button */}
                       <button
                         onClick={prevPage}
                         disabled={currentPage === 1}
-                        className={`flex items-center px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${
-                          currentPage === 1
+                        className={`flex items-center px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${currentPage === 1
                             ? 'text-gray-400 cursor-not-allowed bg-gray-100'
                             : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
-                        }`}
+                          }`}
                       >
                         <ChevronLeft className="w-4 h-4 mr-1" />
                         Previous
@@ -337,11 +413,10 @@ function App() {
                           <button
                             key={page}
                             onClick={() => goToPage(page)}
-                            className={`w-10 h-10 rounded-xl font-semibold transition-all duration-300 ${
-                              currentPage === page
+                            className={`w-10 h-10 rounded-xl font-semibold transition-all duration-300 ${currentPage === page
                                 ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-lg scale-105'
                                 : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                            }`}
+                              }`}
                           >
                             {page}
                           </button>
@@ -352,11 +427,10 @@ function App() {
                       <button
                         onClick={nextPage}
                         disabled={currentPage === totalPages}
-                        className={`flex items-center px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${
-                          currentPage === totalPages
+                        className={`flex items-center px-4 py-2 rounded-xl font-semibold transition-all duration-300 ${currentPage === totalPages
                             ? 'text-gray-400 cursor-not-allowed bg-gray-100'
                             : 'text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
-                        }`}
+                          }`}
                       >
                         Next
                         <ChevronRight className="w-4 h-4 ml-1" />

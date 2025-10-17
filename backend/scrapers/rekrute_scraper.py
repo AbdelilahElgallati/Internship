@@ -82,6 +82,10 @@ class RekruteScraper(BaseScraper):
 
             job_title = title_elem.get_text(strip=True)
             apply_link = title_elem.get('href')
+            
+            # Convert relative URL to absolute URL
+            if apply_link and not apply_link.startswith('http'):
+                apply_link = f"{self.base_url}{apply_link}" if apply_link.startswith('/') else f"{self.base_url}/{apply_link}"
 
             company_name_elem = card.select_one('div.holder a[href*="/recruteur/"]')
             company_name = company_name_elem.get_text(strip=True) if company_name_elem else 'N/A'
