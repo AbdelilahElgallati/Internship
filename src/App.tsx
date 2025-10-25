@@ -267,7 +267,7 @@ function App() {
               </div>
             </div>
 
-            <div className="flex gap-2 bg-white/60 backdrop-blur-sm p-1.5 rounded-2xl shadow-inner border border-gray-200/60">
+            {/* <div className="flex gap-2 bg-white/60 backdrop-blur-sm p-1.5 rounded-2xl shadow-inner border border-gray-200/60">
               <button
                 onClick={() => setActiveTab('search')}
                 className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${activeTab === 'search'
@@ -288,13 +288,13 @@ function App() {
                 <BarChart3 className="w-5 h-5" />
                 Analytics
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </header>
 
       <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'search' ? (
+        {/* {activeTab === 'search' ? ( */}
           <div className="space-y-8">
             <SearchFilters
               searchQuery={searchQuery}
@@ -423,9 +423,9 @@ function App() {
               </>
             )}
           </div>
-        ) : (
+        {/* ) : (
           <StatsDashboard statistics={statistics} isLoading={isStatsLoading} />
-        )}
+        )} */}
       </main>
 
       <footer className="relative bg-white/80 backdrop-blur-md border-t border-gray-200/60 mt-16">
