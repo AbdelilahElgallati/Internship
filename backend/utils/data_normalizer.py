@@ -3,9 +3,7 @@ from datetime import datetime
 from typing import Dict, Any, List
 import re
 
-class DataNormalizer:
-    """Normalizes scraped data for database insertion."""
-    
+class DataNormalizer:    
     def _generate_content_hash(self, job_data: Dict[str, Any]) -> str:
         """Generates a unique hash based on core job content."""
         unique_string = (

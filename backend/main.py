@@ -2,6 +2,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from typing import Optional
+import threading
 from utils.db_client import DatabaseClient
 from scheduler import ScraperScheduler
 import uvicorn
@@ -52,18 +53,15 @@ async def get_internships(
 @app.get("/internships/search")
 async def search_internships(
     keyword: Optional[str] = Query(None),
-    location: Optional[str] = Query(None),
+    location: Optional[str] = Query(None),  
     source_site: Optional[str] = Query(None),
     limit: Optional[int] = Query(50, ge=1, le=200)
 ):
-    results = db_client.search_internships(keyword, location, source_site, limit)
+    results = db_client.search_internships(keyword, location, source_site, limit) 
     return {"count": len(results), "data": results}
 
 @app.get("/internships/stats")
 async def get_internship_stats():
-    """
-    Gets aggregated statistics directly from the database for high performance.
-    """
     stats = db_client.get_aggregated_stats()
     if not stats or stats.get("error"):
         return {
@@ -72,18 +70,14 @@ async def get_internship_stats():
         }
     return stats
 
-
 @app.get("/stats/last_update")
 async def get_last_update():
     last_scrape = db_client.get_latest_scrape_info()
     return last_scrape or {"message": "No scrapes recorded yet."}
 
-
 @app.post("/scrape/trigger")
 async def trigger_scrape():
-    """Manually triggers a new scrape of all sources."""
     print("📡 Manual scrape triggered via API.")
-    # Run in a separate thread to avoid blocking the API response
     thread = threading.Thread(target=scheduler.scrape_all_sites)
     thread.start()
     return {

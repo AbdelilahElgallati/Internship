@@ -18,7 +18,6 @@ class DatabaseClient:
             return 0
         
         try:
-            # 'upsert' with 'ignore_duplicates=True' handles this perfectly
             result = self.client.table('internships').upsert(
                 internships, 
                 on_conflict='content_hash',
@@ -26,10 +25,10 @@ class DatabaseClient:
             ).execute()
             
             inserted_count = len(result.data)
-            print(f"✓ Database insert/upsert complete. New records: {inserted_count}")
+            print(f"[DB] Database insert/upsert complete. New records: {inserted_count}") 
             return inserted_count
         except Exception as e:
-            print(f"✗ Database batch insert failed: {e}")
+            print(f"[DB] Database batch insert failed: {e}") 
             return 0
 
     def get_all_internships(self, limit: int = 100, offset: int = 0) -> List[Dict]:
@@ -49,10 +48,12 @@ class DatabaseClient:
         """Searches for internships with filters."""
         try:
             query = self.client.table('internships').select('*')
+            
             if keyword:
-                query = query.text_search('job_title', f"'{keyword}'")
-            if location:
-                query = query.ilike('location', f'%{location}%')
+                search_term = f'%{keyword}%' 
+                
+                query = query.or_(f"job_title.ilike.{search_term},location.ilike.{search_term}")
+            
             if source_site:
                 query = query.eq('source_site', source_site)
             
@@ -71,16 +72,12 @@ class DatabaseClient:
         This is vastly more scalable than fetching all records.
         """
         try:
-            # RPC (Remote Procedure Call) to a custom SQL function in Supabase
-            # is the most efficient way to do this.
             response = self.client.rpc('get_internship_statistics', {}).execute()
             return response.data[0] if response.data else {}
         except Exception as e:
             print(f"Error fetching aggregated stats: {e}. Ensure the 'get_internship_statistics' RPC function exists in your database.")
             return { "error": str(e) }
-
-    # ... (log_scrape_start, log_scrape_end, get_latest_scrape_info remain similar) ...
-
+        
     def log_scrape_start(self, source_site: str) -> int:
         try:
             log_entry = {'source_site': source_site, 'status': 'running'}

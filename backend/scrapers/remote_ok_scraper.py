@@ -1,81 +1,102 @@
-import requests
-from typing import List, Dict
-from bs4 import BeautifulSoup # <-- ADD THIS IMPORT
+import scrapy
+import json
+from typing import List
 from scrapers.base_scraper import BaseScraper
 from config import REMOTEOK_API_URL
 
-class RemoteOKScraper(BaseScraper):
-    def __init__(self):
-        super().__init__("RemoteOK")
+class RemoteOKSpider(scrapy.Spider):
+    name = 'remoteok_spider'
+    
+    def __init__(self, keywords=None, locations=None, source_site='RemoteOK', results_container=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.keywords = keywords or []
+        self.source_site = source_site
+        self.results_container = results_container if results_container is not None else []
         self.api_url = REMOTEOK_API_URL
         
-    def scrape(self, keywords: List[str], locations: List[str] = None) -> List[Dict]:
-        print(f"\n🌍 [RemoteOK] Fetching jobs from API...")
-        all_results = []
+    def start_requests(self):
+        self.logger.info("Fetching jobs from RemoteOK API...")
+        
+        yield scrapy.Request(
+            url=self.api_url,
+            callback=self.parse,
+            dont_filter=True
+        )
+    
+    def parse(self, response):
         try:
-            response = requests.get(self.api_url, timeout=20)
-            response.raise_for_status()
+            jobs = json.loads(response.text)
             
-            jobs = response.json()
             if not jobs or not isinstance(jobs, list) or len(jobs) < 2:
-                print("⚠️ [RemoteOK] API returned no job data.")
-                return []
+                self.logger.warning("API returned no job data")
+                return
             
             jobs = jobs[1:]
-            print(f"✓ [RemoteOK] Fetched {len(jobs)} total remote jobs.")
-
+            self.logger.info(f"Fetched {len(jobs)} total remote jobs")
+            
+            found_jobs = 0
             for job in jobs:
-                if self._matches_criteria(job, keywords):
-                    all_results.append(self._format_job(job))
+                if self._matches_criteria(job):
+                    job_data = self._format_job(job)
+                    if job_data:
+                        self.results_container.append(job_data)
+                        found_jobs += 1
             
-            print(f"✅ [RemoteOK] Found {len(all_results)} matching internships after filtering.")
+            self.logger.info(f"Found {found_jobs} matching internships after filtering")
             
-        except requests.exceptions.RequestException as e:
-            print(f"❌ [RemoteOK] API request failed: {e}")
-        
-        return all_results
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Failed to parse JSON response: {e}")
+        except Exception as e:
+            self.logger.error(f"Error processing RemoteOK API response: {e}")
     
-    def _matches_criteria(self, job: dict, keywords: List[str]) -> bool:
+    def _matches_criteria(self, job: dict) -> bool:
         text_to_check = (
-            job.get('position', '') + ' ' + 
+            job.get('position', '') + ' ' +
             job.get('description', '') + ' ' +
             ' '.join(job.get('tags', []))
         ).lower()
-
+        
         internship_terms = ['intern', 'internship', 'trainee', 'stage']
         is_internship = any(term in text_to_check for term in internship_terms)
         
         if not is_internship:
             return False
-
-        if keywords and not any(kw.lower() in text_to_check for kw in keywords):
+        
+        if self.keywords and not any(kw.lower() in text_to_check for kw in self.keywords):
             return False
-            
+        
         return True
+    
+    def _format_job(self, job: dict) -> dict:
+        try:
+            salary_min = job.get('salary_min', 0)
+            salary_max = job.get('salary_max', 0)
+            salary = f"${salary_min} - ${salary_max}" if salary_min > 0 else "Not specified"
+            
+            raw_description = job.get('description', '')
+            
+            from scrapy.selector import Selector
+            selector = Selector(text=raw_description)
+            clean_description = ' '.join(selector.css('*::text').getall()).strip()
+            
+            return {
+                'job_title': job.get('position', 'N/A'),
+                'company_name': job.get('company', 'N/A'),
+                'location': 'Remote',
+                'date_posted': job.get('date', 'Recently'),
+                'employment_type': 'Internship',
+                'job_description': clean_description,
+                'apply_link': job.get('url', ''),
+                'salary': salary,
+                'source_site': self.source_site
+            }
+        except Exception as e:
+            self.logger.error(f"Error formatting job data: {e}")
+            return None
 
-    def _format_job(self, job: dict) -> Dict:
-        """
-        Formats the API response, now with HTML parsing for the description.
-        """
-        salary_min = job.get('salary_min', 0)
-        salary_max = job.get('salary_max', 0)
-        salary = f"${salary_min} - ${salary_max}" if salary_min > 0 else "Not specified"
-
-        # --- FIX: Parse the HTML description ---
-        raw_description = job.get('description', '')
-        # Use BeautifulSoup to get clean text from the HTML block
-        soup = BeautifulSoup(raw_description, 'html.parser')
-        clean_description = soup.get_text(separator='\n', strip=True)
-        # --- END FIX ---
-
-        return {
-            'job_title': job.get('position', 'N/A'),
-            'company_name': job.get('company', 'N/A'),
-            'location': 'Remote',
-            'date_posted': job.get('date', 'Recently'),
-            'employment_type': 'Internship',
-            'job_description': clean_description, # <-- Use the cleaned description
-            'apply_link': job.get('url', ''),
-            'salary': salary,
-            'source_site': self.source_site
-        }
+class RemoteOKScraper(BaseScraper):
+    def __init__(self):
+        super().__init__("RemoteOK")
+    
+    def get_spider_class(self):
+        return RemoteOKSpider
