@@ -1,65 +1,56 @@
 # Internship Aggregator
+A complete web application (Frontend + Backend) for aggregating and searching internship offers.
+The backend uses **FastAPI** and **Scrapy** to scrape data and stores it in **Supabase**. Scraping is automated with **APScheduler**.
 
-Une application web complète (Frontend + Backend) pour agréger et rechercher des offres de stage.
-
-Le backend utilise **FastAPI** et **Scrapy** pour scraper les données et les stocke dans **Supabase**. Le scraping est automatisé avec **APScheduler**.
-
-## Stack Technique
-
+## Tech Stack
 * **Backend**: FastAPI, Scrapy, Supabase, APScheduler
-* **Frontend**: React / Next.js, TailwindCSS 
+* **Frontend**: React / Next.js, TailwindCSS
 
 ## Installation
 
 ### Backend
-
-1.  **Naviguer vers le dossier :**
+1. **Navigate to the folder:**
     ```bash
     cd backend
     ```
-2.  **Installer les dépendances Python :**
+2. **Install Python dependencies:**
     ```bash
     pip install -r requirements.txt
     ```
-   
-3.  **Configurer la base de données :**
-    * Exécutez le script SQL `backend/utils/table.sql` dans votre éditeur SQL Supabase.
-4.  **Variables d'environnement :**
-    * Créez un fichier `.env` à la racine de `backend/`.
-    * Ajoutez vos clés Supabase (utilisez `backend/.env` comme modèle):
+  
+3. **Configure the database:**
+    * Run the SQL script `backend/utils/table.sql` in your Supabase SQL editor.
+4. **Environment variables:**
+    * Create a `.env` file at the root of `backend/`.
+    * Add your Supabase keys (use `backend/.env` as a model):
       ```env
-      SUPABASE_URL="votre_url_supabase"
-      SUPABASE_SERVICE_ROLE_KEY="votre_clé_de_service_supabase"
+      SUPABASE_URL="your_supabase_url"
+      SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_key"
       ```
-5.  **Lancer le serveur backend :**
+5. **Launch the backend server:**
     ```bash
     uvicorn main:app --host 0.0.0.0 --port 8000
     ```
-   
-
+  
 ### Frontend
-
-1.  **Installer les dépendances Node.js :**
+1. **Install Node.js dependencies:**
     ```bash
-    npm install 
+    npm install
     ```
-2.  **Variables d'environnement :**
-    * Créez un fichier `.env.local` à la racine.
-    * Ajoutez l'URL de votre API backend :
+2. **Environment variables:**
+    * Create a `.env.local` file at the root.
+    * Add your backend API URL:
       ```env
       NEXT_PUBLIC_API_URL="http://localhost:8000"
       ```
-3.  **Lancer le serveur de développement :**
+3. **Launch the development server:**
     ```bash
     npm run dev
     ```
 
-## Endpoints API principaux
-
-
-
-* `GET /internships`: Récupérer les offres de stage (paginées).
-* `GET /internships/search`: Rechercher des stages (par `keyword`, `location`, etc.).
-* `GET /internships/stats`: Obtenir les statistiques agrégées.
-* `GET /stats/last_update`: Voir le statut du dernier scraping.
-* `POST /scrape/trigger`: Lancer manuellement un nouveau cycle de scraping.
+## Main API Endpoints
+* `GET /internships`: Retrieve internship offers (paginated).
+* `GET /internships/search`: Search for internships (by `keyword`, `location`, etc.).
+* `GET /internships/stats`: Get aggregated statistics.
+* `GET /stats/last_update`: View the status of the last scraping.
+* `POST /scrape/trigger`: Manually launch a new scraping cycle.
